@@ -1,7 +1,16 @@
+# Промпт 3 — похідні поля, OrderItem, UK (spec v3 = spec.md)
+
+## Промпт
+spec оновлено: з CustomerOrder прибрано `total_price`; додано сутність OrderItem; критерії 2 і 3 уточнено, додано 7 і 8. Згенеруй діаграму ще раз, врахуй усі критерії 1–8.
+
+(повний текст — `spec.md` цього репозиторію)
+
+## Відповідь AI
+```mermaid
 erDiagram
     CUSTOMER {
         UUID id PK
-        string email
+        string email UK
         string full_name
     }
     PUBLISHER {
@@ -19,7 +28,7 @@ erDiagram
     BOOK {
         UUID id PK
         UUID publisher_id FK
-        string isbn
+        string isbn UK
         string title
         int publication_year
         decimal price
@@ -29,7 +38,13 @@ erDiagram
         UUID customer_id FK
         string status
         timestamp created_at
-        decimal total_price
+    }
+    ORDER_ITEM {
+        UUID id PK
+        UUID order_id FK
+        UUID book_id FK
+        int quantity
+        decimal unit_price
     }
     REVIEW {
         UUID id PK
@@ -45,6 +60,11 @@ erDiagram
     CATEGORY }o--o{ BOOK : classifies
     CUSTOMER }o--o{ BOOK : wishlists
     CUSTOMER ||--o{ CUSTOMER_ORDER : places
+    CUSTOMER_ORDER ||--|{ ORDER_ITEM : contains
+    BOOK ||--o{ ORDER_ITEM : "ordered as"
     CUSTOMER ||--o{ REVIEW : writes
-    CUSTOMER_ORDER }o--o{ BOOK : contains
     BOOK ||--o{ REVIEW : "reviewed in"
+```
+
+## Аудит
+Усі розбіжності з prompt-1/2 закрито; перевірка по критеріях 1–8 — у `prompt-4.md`.
