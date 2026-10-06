@@ -24,4 +24,4 @@ OrderItem як асоціативна сутність, а не прямий N:M
 
 ## Здача
 
-(а) PR: `<посилання>`  (б) цей DEFENSE.
+(а) PR: `https://github.com/Saeghxx/KPI2/pull/1`  (б) цей DEFENSE.
