@@ -1,0 +1,46 @@
+erDiagram
+    CUSTOMER {
+        UUID id
+        string email
+        string full_name
+    }
+    PUBLISHER {
+        UUID id
+        string name
+    }
+    AUTHOR {
+        UUID id
+        string full_name
+    }
+    CATEGORY {
+        UUID id
+        string name
+    }
+    BOOK {
+        UUID id
+        string isbn
+        string title
+        int publication_year
+        decimal price
+    }
+    CUSTOMER_ORDER {
+        UUID id
+        string status
+        datetime created_at
+        decimal total_price
+    }
+    REVIEW {
+        UUID id
+        int rating
+        string comment
+        datetime created_at
+    }
+
+    PUBLISHER ||--o{ BOOK : publishes
+    AUTHOR }o--o{ BOOK : writes
+    CATEGORY }o--o{ BOOK : classifies
+    CUSTOMER }o--o{ BOOK : wishlists
+    CUSTOMER ||--o{ CUSTOMER_ORDER : places
+    CUSTOMER ||--o{ REVIEW : writes
+    CUSTOMER_ORDER }o--o{ BOOK : contains
+    BOOK ||--o{ REVIEW : "reviewed in"
