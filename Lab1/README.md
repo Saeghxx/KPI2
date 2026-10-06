@@ -13,3 +13,4 @@
 
 ## ER-діаграма
 Див. `model/bookstore.mmd` (GitHub рендерить Mermaid автоматично).
+ 
