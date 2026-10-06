@@ -1,39 +1,43 @@
 erDiagram
     CUSTOMER {
-        UUID id
+        UUID id PK
         string email
         string full_name
     }
     PUBLISHER {
-        UUID id
+        UUID id PK
         string name
     }
     AUTHOR {
-        UUID id
+        UUID id PK
         string full_name
     }
     CATEGORY {
-        UUID id
+        UUID id PK
         string name
     }
     BOOK {
-        UUID id
+        UUID id PK
+        UUID publisher_id FK
         string isbn
         string title
         int publication_year
         decimal price
     }
     CUSTOMER_ORDER {
-        UUID id
+        UUID id PK
+        UUID customer_id FK
         string status
-        datetime created_at
+        timestamp created_at
         decimal total_price
     }
     REVIEW {
-        UUID id
+        UUID id PK
+        UUID customer_id FK
+        UUID book_id FK
         int rating
         string comment
-        datetime created_at
+        timestamp created_at
     }
 
     PUBLISHER ||--o{ BOOK : publishes
