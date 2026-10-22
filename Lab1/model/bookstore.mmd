@@ -1,57 +1,72 @@
 erDiagram
-    CUSTOMER {
+    Customer {
         UUID id PK
-        string email UK
-        string full_name
+        varchar email UK
+        varchar full_name
     }
-    PUBLISHER {
+
+    Publisher {
         UUID id PK
-        string name
+        varchar name
     }
-    AUTHOR {
+
+    Author {
         UUID id PK
-        string full_name
+        varchar full_name
     }
-    CATEGORY {
+
+    Category {
         UUID id PK
-        string name
+        varchar name
     }
-    BOOK {
+
+    Book {
         UUID id PK
         UUID publisher_id FK
-        string isbn UK
-        string title
+        varchar isbn UK
+        varchar title
         int publication_year
         decimal price
     }
-    CUSTOMER_ORDER {
+
+    CustomerOrder {
         UUID id PK
         UUID customer_id FK
-        string status
+        varchar status
         timestamp created_at
     }
-    ORDER_ITEM {
+
+    OrderItem {
         UUID id PK
         UUID order_id FK
         UUID book_id FK
         int quantity
         decimal unit_price
     }
-    REVIEW {
+
+    Review {
         UUID id PK
         UUID customer_id FK
         UUID book_id FK
         int rating
-        string comment
+        varchar comment
         timestamp created_at
     }
 
-    PUBLISHER ||--o{ BOOK : publishes
-    AUTHOR }o--o{ BOOK : writes
-    CATEGORY }o--o{ BOOK : classifies
-    CUSTOMER }o--o{ BOOK : wishlists
-    CUSTOMER ||--o{ CUSTOMER_ORDER : places
-    CUSTOMER_ORDER ||--|{ ORDER_ITEM : contains
-    BOOK ||--o{ ORDER_ITEM : "ordered as"
-    CUSTOMER ||--o{ REVIEW : writes
-    BOOK ||--o{ REVIEW : "reviewed in"
+    Publisher ||--o{ Book : publishes
+    Author }|--o{ Book : writes
+    Category }o--o{ Book : classifies
+    Customer }o--o{ Book : wishlist
+    Customer ||--o{ CustomerOrder : places
+    CustomerOrder ||--|{ OrderItem : contains
+    Book ||--o{ OrderItem : ordered_as
+    Customer ||--o{ Review : writes
+    Book ||--o{ Review : receives
+
+    %% Constraints not fully expressible in Mermaid:
+    %% 9. Every Book must have at least one Author.
+    %% 10. CustomerOrder.status IN (new, paid, shipped, cancelled).
+    %% 11. Review.rating is an integer from 1 to 5.
+    %% 12. UNIQUE (Review.customer_id, Review.book_id).
+    %% 13. UNIQUE (OrderItem.order_id, OrderItem.book_id).
+    %% 13. OrderItem.quantity >= 1.
