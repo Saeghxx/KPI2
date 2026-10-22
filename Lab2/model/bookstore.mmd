@@ -1,0 +1,97 @@
+# ER-модель (оновлена в Завданні 2)
+
+```mermaid
+erDiagram
+    Customer {
+        UUID id PK
+        varchar email UK
+        varchar full_name
+        varchar password_hash
+        varchar role
+        varchar phone
+        varchar address
+    }
+
+    Publisher {
+        UUID id PK
+        varchar name
+    }
+
+    Author {
+        UUID id PK
+        varchar full_name
+    }
+
+    Category {
+        UUID id PK
+        varchar name
+    }
+
+    Book {
+        UUID id PK
+        UUID publisher_id FK
+        varchar isbn UK
+        varchar title
+        int publication_year
+        decimal price
+    }
+
+    CustomerOrder {
+        UUID id PK
+        UUID customer_id FK
+        varchar status
+        timestamp created_at
+    }
+
+    OrderItem {
+        UUID id PK
+        UUID order_id FK
+        UUID book_id FK
+        int quantity
+        decimal unit_price
+    }
+
+    Review {
+        UUID id PK
+        UUID customer_id FK
+        UUID book_id FK
+        int rating
+        varchar comment
+        timestamp created_at
+    }
+
+    Payment {
+        UUID id PK
+        UUID order_id FK
+        varchar transaction_id UK
+        varchar payment_status
+        decimal amount
+    }
+
+    Shipment {
+        UUID id PK
+        UUID order_id FK
+        varchar shipment_id UK
+    }
+
+    Publisher ||--o{ Book : publishes
+    Author }|--o{ Book : writes
+    Category }o--o{ Book : classifies
+    Customer }o--o{ Book : wishlist
+    Customer ||--o{ CustomerOrder : places
+    CustomerOrder ||--|{ OrderItem : contains
+    Book ||--o{ OrderItem : ordered_as
+    Customer ||--o{ Review : writes
+    Book ||--o{ Review : receives
+    CustomerOrder ||--o{ Payment : paid_by
+    CustomerOrder ||--o| Shipment : shipped_as
+
+    %% 9. кожна книга має щонайменше одного автора
+    %% 10. status: одне зі значень new, paid, shipped, cancelled
+    %% 11. rating: ціле від 1 до 5
+    %% 12. унікальна пара: customer_id + book_id у Review
+    %% 13. унікальна пара: order_id + book_id в OrderItem; quantity не менше 1
+    %% 14. role: customer або admin; password_hash: хеш Argon2id (FR-12)
+    %% 15. payment_status: success, declined або pending_verification (FR-07)
+    %% 16. transaction_id може бути порожнім при pending_verification
+```
