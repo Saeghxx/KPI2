@@ -79,11 +79,9 @@ erDiagram
     Customer ||--o{ Review : writes
     Book ||--o{ Review : receives
 
-    %% Constraints not fully expressible in Mermaid:
-    %% 9. Every Book must have at least one Author.
-    %% 10. CustomerOrder.status IN (new, paid, shipped, cancelled).
-    %% 11. Review.rating is an integer from 1 to 5.
-    %% 12. UNIQUE (Review.customer_id, Review.book_id).
-    %% 13. UNIQUE (OrderItem.order_id, OrderItem.book_id).
-    %% 13. OrderItem.quantity >= 1.
+    %% 9. кожна книга має щонайменше одного автора
+    %% 10. status: одне зі значень new, paid, shipped, cancelled
+    %% 11. rating: ціле від 1 до 5
+    %% 12. унікальна пара: customer_id + book_id у Review
+    %% 13. унікальна пара: order_id + book_id в OrderItem; quantity не менше 1
     ```
