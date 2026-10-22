@@ -12,4 +12,78 @@
 - `DEFENSE.md` — точка входу для рев'ю
 
 ## ER-діаграма
-Див. `model/bookstore.mmd` (GitHub рендерить Mermaid автоматично).
+
+```mermaid
+erDiagram
+    Customer {
+        UUID id PK
+        varchar email UK
+        varchar full_name
+    }
+
+    Publisher {
+        UUID id PK
+        varchar name
+    }
+
+    Author {
+        UUID id PK
+        varchar full_name
+    }
+
+    Category {
+        UUID id PK
+        varchar name
+    }
+
+    Book {
+        UUID id PK
+        UUID publisher_id FK
+        varchar isbn UK
+        varchar title
+        int publication_year
+        decimal price
+    }
+
+    CustomerOrder {
+        UUID id PK
+        UUID customer_id FK
+        varchar status
+        timestamp created_at
+    }
+
+    OrderItem {
+        UUID id PK
+        UUID order_id FK
+        UUID book_id FK
+        int quantity
+        decimal unit_price
+    }
+
+    Review {
+        UUID id PK
+        UUID customer_id FK
+        UUID book_id FK
+        int rating
+        varchar comment
+        timestamp created_at
+    }
+
+    Publisher ||--o{ Book : publishes
+    Author }|--o{ Book : writes
+    Category }o--o{ Book : classifies
+    Customer }o--o{ Book : wishlist
+    Customer ||--o{ CustomerOrder : places
+    CustomerOrder ||--|{ OrderItem : contains
+    Book ||--o{ OrderItem : ordered_as
+    Customer ||--o{ Review : writes
+    Book ||--o{ Review : receives
+
+    %% Constraints not fully expressible in Mermaid:
+    %% 9. Every Book must have at least one Author.
+    %% 10. CustomerOrder.status IN (new, paid, shipped, cancelled).
+    %% 11. Review.rating is an integer from 1 to 5.
+    %% 12. UNIQUE (Review.customer_id, Review.book_id).
+    %% 13. UNIQUE (OrderItem.order_id, OrderItem.book_id).
+    %% 13. OrderItem.quantity >= 1.
+    ```
