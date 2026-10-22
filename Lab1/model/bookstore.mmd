@@ -1,70 +1,57 @@
 erDiagram
-    Customer {
+    CUSTOMER {
         UUID id PK
-        varchar email UK
-        varchar full_name
+        string email UK
+        string full_name
     }
-
-    Publisher {
+    PUBLISHER {
         UUID id PK
-        varchar name
+        string name
     }
-
-    Author {
+    AUTHOR {
         UUID id PK
-        varchar full_name
+        string full_name
     }
-
-    Category {
+    CATEGORY {
         UUID id PK
-        varchar name
+        string name
     }
-
-    Book {
+    BOOK {
         UUID id PK
         UUID publisher_id FK
-        varchar isbn UK
-        varchar title
+        string isbn UK
+        string title
         int publication_year
         decimal price
     }
-
-    CustomerOrder {
+    CUSTOMER_ORDER {
         UUID id PK
         UUID customer_id FK
-        varchar status
+        string status
         timestamp created_at
     }
-
-    OrderItem {
+    ORDER_ITEM {
         UUID id PK
         UUID order_id FK
         UUID book_id FK
         int quantity
         decimal unit_price
     }
-
-    Review {
+    REVIEW {
         UUID id PK
         UUID customer_id FK
         UUID book_id FK
         int rating
-        varchar comment
+        string comment
         timestamp created_at
     }
 
-    Publisher ||--o{ Book : publishes
-    Author }|--o{ Book : writes
-    Category }o--o{ Book : classifies
-    Customer }o--o{ Book : wishlist
-    Customer ||--o{ CustomerOrder : places
-    CustomerOrder ||--|{ OrderItem : contains
-    Book ||--o{ OrderItem : ordered_as
-    Customer ||--o{ Review : writes
-    Book ||--o{ Review : receives
-
-    %% 9. кожна книга має щонайменше одного автора
-    %% 10. status: одне зі значень new, paid, shipped, cancelled
-    %% 11. rating: ціле від 1 до 5
-    %% 12. унікальна пара: customer_id + book_id у Review
-    %% 13. унікальна пара: order_id + book_id в OrderItem; quantity не менше 1
+    PUBLISHER ||--o{ BOOK : publishes
+    AUTHOR }o--o{ BOOK : writes
+    CATEGORY }o--o{ BOOK : classifies
+    CUSTOMER }o--o{ BOOK : wishlists
+    CUSTOMER ||--o{ CUSTOMER_ORDER : places
+    CUSTOMER_ORDER ||--|{ ORDER_ITEM : contains
+    BOOK ||--o{ ORDER_ITEM : "ordered as"
+    CUSTOMER ||--o{ REVIEW : writes
+    BOOK ||--o{ REVIEW : "reviewed in"
