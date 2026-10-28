@@ -37,3 +37,10 @@ SC-09 закінчується на кроці 7: Gherkin далі не йде.
 10. PaymentService ⇢ OrderService: `PaymentResult(success)`.
 11. OrderService → DB: `updateOrderStatus(orderId, paid)`; DB ⇢ OrderService: `status(paid)`.
 12. OrderService ⇢ UI/Controller ⇢ Buyer: `showSuccess()`.
+
+### SC-11 — Відмова в оплаті (FR-07, UC-08)
+Кроки 1–7 як у SC-09, далі:
+8. Gateway ⇢ PaymentService: `PaymentResult(declined, transactionId)`.
+9. PaymentService → DB: `savePayment(orderId, declined, transactionId, amount)`; DB ⇢ PaymentService: `paymentSaved`.
+10. PaymentService ⇢ OrderService: `PaymentResult(declined)`. `updateOrderStatus` не викликається, статус лишається `new`.
+11. OrderService ⇢ UI/Controller ⇢ Buyer: `showDeclined()`.
