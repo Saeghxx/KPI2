@@ -51,3 +51,18 @@ SC-09 закінчується на кроці 7: Gherkin далі не йде.
 9. PaymentService → DB: `savePayment(orderId, pending_verification, null, amount)`; DB ⇢ PaymentService: `paymentSaved`.
 10. PaymentService ⇢ OrderService: `PaymentResult(pending_verification)`. Статус лишається `new`.
 11. OrderService ⇢ UI/Controller ⇢ Buyer: `showVerificationNotice()`. Успіх не повідомляється.
+
+## Фрагменти
+- Усі діаграми: `opt [status = new]` починається одразу після `readOrder` (крок 3) і охоплює решту потоку. Статус відомий лише після читання замовлення.
+- SC-09: додатково `loop` для суми по позиціях замовлення.
+- SC-11: `alt [відмова]` / `else [успіх]`; в `else` лише примітка «успіх — див. SC-10».
+- SC-12: `alt [таймаут 30 с]` / `else [відповідь отримано]`; в `else` лише примітка «результат обробляється як у SC-10/SC-11».
+- Activation bars UI/Controller і OrderService починаються до `opt` і закінчуються після нього. Activation bar PaymentService не обривається всередині `alt`.
+- Пунктирні стрілки позначають return-повідомлення.
+
+## Припущення моделювання (не кроки Gherkin)
+- `opt [status = new]` і `else`-гілки (у Gherkin статус — лише передумова «Дано»).
+- Шлюз повертає результат синхронною відповіддю на `chargeOrder()`.
+- Таймаут визначає сам PaymentService (`checkTimeout()`).
+- `Payment` створюється після відповіді шлюзу або таймауту (в ER немає початкового статусу).
+- Назва return-повідомлення `PaymentResult` і методів `calculateAmount()`, `checkTimeout()` — моє позначення.
