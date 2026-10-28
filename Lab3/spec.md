@@ -29,3 +29,11 @@ UC-06 «Оплата замовлення» (Завдання 2). Мета ак�
 7. PaymentService → Gateway: `chargeOrder(orderId, amount)`.
 
 SC-09 закінчується на кроці 7: Gherkin далі не йде.
+
+### SC-10 — Успішна оплата (FR-05, FR-06, UC-07)
+Кроки 1–7 як у SC-09, далі:
+8. Gateway ⇢ PaymentService: `PaymentResult(success, transactionId)`.
+9. PaymentService → DB: `savePayment(orderId, success, transactionId, amount)`; DB ⇢ PaymentService: `paymentSaved`.
+10. PaymentService ⇢ OrderService: `PaymentResult(success)`.
+11. OrderService → DB: `updateOrderStatus(orderId, paid)`; DB ⇢ OrderService: `status(paid)`.
+12. OrderService ⇢ UI/Controller ⇢ Buyer: `showSuccess()`.
