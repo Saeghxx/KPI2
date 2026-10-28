@@ -1,81 +1,63 @@
-# Spec — Завдання 3: Взаємодія (Sequence)
+# Lab3: Взаємодія (Sequence)
 
-## Обраний UC
-UC-06 «Оплата замовлення» (Завдання 2). Мета актора: Покупець хоче сплатити CustomerOrder зі статусом `new` через платіжний шлюз і дізнатися результат. Діаграми будуються для сценаріїв SC-09–SC-12 (Gherkin) і узгоджуються з FR-05–FR-07 та ER-моделлю `bookstore.mmd`. 
+**Інструмент:** Mermaid
 
-## Учасники
-| Учасник | Тип | Сутність ER / роль |
-|---|---|---|
-| Buyer | актор | Customer |
-| UI/Controller | інтерфейс | — |
-| OrderService | сервіс | CustomerOrder, OrderItem |
-| PaymentService | сервіс | Payment |
-| Gateway | зовнішня система | — |
-| DB | сховище | CustomerOrder, OrderItem, Payment |
+## 1. Намір і сценарії
 
-Скорочення: Buyer — Покупець, Gateway — платіжний шлюз, DB — база даних.
+Мета покупця — оплатити замовлення; діаграми показують успіх, відмову й тайм-аут.
 
+- **UC-06:** Оплата замовлення.
+- **SC-09 (FR-05, FR-04, UC-06):** ініціювання оплати.
+- **SC-10 (FR-05, FR-06, UC-07):** успішна оплата.
+- **SC-11 (FR-07, UC-08):** відмова.
+- **SC-12 (FR-05, FR-07, UC-08):** тайм-аут.
 
-## Сценарії
+## 2. Учасники та ER
 
-### SC-09 — Надсилання запиту на оплату (FR-05, UC-06)
-Передумова: `status = new`, сума тестового замовлення 500.00 UAH.
-1. Buyer → UI/Controller: `submitPayment(orderId)`.
-2. UI/Controller → OrderService: `processOrderPayment(orderId)`.
-3. OrderService → DB: `readOrder(orderId)`; DB ⇢ OrderService: `order`.
-4. OrderService → DB: `readOrderItems(orderId)`; DB ⇢ OrderService: `orderItems`.
-5. OrderService: `calculateAmount()` — у `loop` по позиціях, `amount = Σ(quantity × unit_price)`.
-6. OrderService → PaymentService: `processPayment(orderId, amount)`.
-7. PaymentService → Gateway: `chargeOrder(orderId, amount)`.
+| Учасник | Відповідність ER |
+|---|---|
+| `Buyer` | `Customer` |
+| `UI/Controller` | Технічний компонент |
+| `OrderService` | `CustomerOrder`, `OrderItem` |
+| `PaymentService` | `Payment` |
+| `Gateway` | Зовнішня система, поза ER |
+| `DB` | Сховище ER-сутностей |
 
-SC-09 закінчується на кроці 7: Gherkin далі не йде.
+## 3. Спільна послідовність SC-09
 
-### SC-10 — Успішна оплата (FR-05, FR-06, UC-07)
-Кроки 1–7 як у SC-09, далі:
-8. Gateway ⇢ PaymentService: `PaymentResult(success, transactionId)`.
-9. PaymentService → DB: `savePayment(orderId, success, transactionId, amount)`; DB ⇢ PaymentService: `paymentSaved`.
-10. PaymentService ⇢ OrderService: `PaymentResult(success)`.
-11. OrderService → DB: `updateOrderStatus(orderId, paid)`; DB ⇢ OrderService: `status(paid)`.
-12. OrderService ⇢ UI/Controller ⇢ Buyer: `showSuccess()`.
+**Передумова:** замовлення має статус `new`, сума позицій — `500.00`.
 
-### SC-11 — Відмова в оплаті (FR-07, UC-08)
-Кроки 1–7 як у SC-09, далі:
-8. Gateway ⇢ PaymentService: `PaymentResult(declined, transactionId)`.
-9. PaymentService → DB: `savePayment(orderId, declined, transactionId, amount)`; DB ⇢ PaymentService: `paymentSaved`.
-10. PaymentService ⇢ OrderService: `PaymentResult(declined)`. `updateOrderStatus` не викликається, статус лишається `new`.
-11. OrderService ⇢ UI/Controller ⇢ Buyer: `showDeclined()`.
+1. `Buyer → UI/Controller`: `submitPayment(orderId)`.
+2. `UI/Controller → OrderService`: `processOrderPayment(orderId)`.
+3. `OrderService → DB`: `readOrder(orderId)`; повернення `order`.
+4. `opt [status = new]`: `readOrderItems(orderId)`; повернення `orderItems`; `loop` обчислює суму через `calculateAmount()`.
+5. Усередині `opt`: `processPayment(orderId, amount)`, далі `chargeOrder(orderId, amount)` до `Gateway`.
 
-### SC-12 — Таймаут оплати (FR-05, FR-07, UC-08)
-Кроки 1–7 як у SC-09, далі:
-8. Відповіді на `chargeOrder` немає 30 секунд: PaymentService виконує `checkTimeout()` і визначає, що час вийшов.
-9. PaymentService → DB: `savePayment(orderId, pending_verification, null, amount)`; DB ⇢ PaymentService: `paymentSaved`.
-10. PaymentService ⇢ OrderService: `PaymentResult(pending_verification)`. Статус лишається `new`.
-11. OrderService ⇢ UI/Controller ⇢ Buyer: `showVerificationNotice()`. Успіх не повідомляється.
+SC-10–SC-12 повторюють спільну послідовність від кроку 4. Їхній `opt [status = new]` охоплює потік до відповідного завершального виклику `showSuccess()`, `showDeclined()` або `showVerificationNotice()` включно.
 
-## Фрагменти
-- Усі діаграми: `opt [status = new]` починається одразу після `readOrder` (крок 3) і охоплює решту потоку. Статус відомий лише після читання замовлення.
-- SC-09: додатково `loop` для суми по позиціях замовлення.
-- SC-11: `alt [відмова]` / `else [успіх]`; в `else` лише примітка «успіх — див. SC-10».
-- SC-12: `alt [таймаут 30 с]` / `else [відповідь отримано]`; в `else` лише примітка «результат обробляється як у SC-10/SC-11».
-- Activation bars UI/Controller і OrderService починаються до `opt` і закінчуються після нього. Activation bar PaymentService не обривається всередині `alt`.
-- Пунктирні стрілки позначають return-повідомлення.
+## 4. Результати сценаріїв
 
-## Припущення моделювання (не кроки Gherkin)
-- `opt [status = new]` і `else`-гілки (у Gherkin статус — лише передумова «Дано»).
-- Шлюз повертає результат синхронною відповіддю на `chargeOrder()`.
-- Таймаут визначає сам PaymentService (`checkTimeout()`).
-- `Payment` створюється після відповіді шлюзу або таймауту (в ER немає початкового статусу).
-- Назва return-повідомлення `PaymentResult` і методів `calculateAmount()`, `checkTimeout()` — моє позначення.
+- **SC-09:** `chargeOrder(orderId, amount)` надіслано з сумою `500.00`.
+- **SC-10:** `Gateway` повертає `PaymentResult(success, transactionId)`. `PaymentService → DB`: `savePayment(orderId, success, transactionId, amount)`; DB повертає `paymentSaved`. Далі `PaymentService → OrderService`: `PaymentResult(success, transactionId)`. `OrderService → DB`: `updateOrderStatus(orderId, paid)`; DB повертає `status(paid)`. `UI/Controller → Buyer`: `showSuccess()`.
+- **SC-11:** `Gateway` один раз повертає `PaymentResult(result, transactionId)` перед `alt [result = declined] / else [result = success]`. При відмові зберігається `Payment` зі статусом `declined`, замовлення залишається `new`, `UI/Controller → Buyer`: `showDeclined()`. При успіху повністю повторюється послідовність SC-10.
+- **SC-12:** після `chargeOrder` запускається відлік 30 секунд; `PaymentService` викликає `checkTimeout()`. `alt [timeout] / else [response received]`. При тайм-ауті відповіді Gateway немає; зберігається `Payment` зі статусом `pending_verification` і `transactionId = NULL`, замовлення залишається `new`, `UI/Controller → Buyer`: `showVerificationNotice()`. При відповіді Gateway повертає `PaymentResult(result, transactionId)`; вкладений `alt` розрізняє `success` і `declined` та повністю повторює відповідну послідовність SC-10 або SC-11.
 
-## Критерії прийняття
-1. SC-09 має `loop` і `opt`; SC-10 `opt`; SC-11 і SC-12 `opt` та `alt`.
-2. Кожен виклик, де сценарій передбачає відповідь, має штрихове return-повідомлення.
-3. Activation bar UI/Controller і OrderService починається до `opt` і закінчується після нього; PaymentService не обривається в `alt`.
-4. Назви викликів мають вигляд дієслово + іменник().
-5. Учасники відповідають таблиці й ER (Payment, CustomerOrder, OrderItem).
-6. Кроки збігаються з Gherkin; усе, чого там немає, перелічено в «Припущеннях».
-7. SC-09 закінчується на `chargeOrder`; SC-10 — `paid`; SC-11 — `declined`, статус `new`; SC-12 — `pending_verification`, статус `new`, успіх не повідомлено.
-8. `savePayment` і `updateOrderStatus` містять `orderId`.
+## 5. Критерії прийняття
 
-## Поза обсягом
-Внутрішня робота шлюзу, банківські перевірки, повторні спроби оплати, пізній callback після таймауту, реалізація UI.
+1. Фрагменти: SC-09 — `opt` + `loop`; SC-10 — `opt`; SC-11 — `opt` + `alt`; SC-12 — `opt` + зовнішній і вкладений `alt`.
+2. Return-повідомлення малювати пунктиром: `order`, `orderItems`, `PaymentResult(...)`, `paymentSaved`, `status(paid)`. У SC-11 шлюз повертає результат лише один раз перед `alt`.
+3. Activation bars відповідають викликам і поверненням; `UI/Controller` та `OrderService` активні до `opt` і після нього; `PaymentService` не деактивується всередині `alt`. У SC-12 активація `Gateway` закривається після відповіді в `[response received]` або фіксації тайм-ауту в `[timeout]`; відповіді Gateway у гілці тайм-ауту немає.
+4. **Назви викликів** мають формат «дієслово + іменник()»; використовуються назви й параметри з цього spec.
+5. Учасники узгоджені з ER; `UI/Controller` і `Gateway` не є сутностями ER.
+6. Діаграми відповідають Gherkin і spec, без нових непогоджених правил.
+7. Завершальні стани: SC-10 — платіж `success`, замовлення `paid`; SC-11 — платіж `declined`, замовлення `new`; SC-12 — `pending_verification`, замовлення `new`.
+8. `savePayment(...)` і `updateOrderStatus(...)` містять `orderId`; сума платежу відповідає сумі позицій.
+
+## 6. Припущення та поза обсягом
+
+- Gateway повертає результат синхронно; у SC-12 відповідь може не надійти протягом 30 секунд.
+- `Payment` створюється після відповіді Gateway або фіксації тайм-ауту; для `success`, `declined` і `pending_verification` зберігається запис.
+- `transactionId` може бути `NULL`, якщо шлюз не повернув ідентифікатор; непорожні значення унікальні.
+- Гілки успіху SC-11 і SC-12 наведено для повноти альтернативних потоків; вони виходять за межі основного результату Gherkin SC-11.
+- Замовлення зі статусом, відмінним від `new`, поза обсягом.
+- Поза обсягом: внутрішня логіка шлюзу, банківські перевірки, повторні спроби, пізні callback-и та реалізація UI.
