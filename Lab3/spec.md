@@ -44,3 +44,10 @@ SC-09 закінчується на кроці 7: Gherkin далі не йде.
 9. PaymentService → DB: `savePayment(orderId, declined, transactionId, amount)`; DB ⇢ PaymentService: `paymentSaved`.
 10. PaymentService ⇢ OrderService: `PaymentResult(declined)`. `updateOrderStatus` не викликається, статус лишається `new`.
 11. OrderService ⇢ UI/Controller ⇢ Buyer: `showDeclined()`.
+
+### SC-12 — Таймаут оплати (FR-05, FR-07, UC-08)
+Кроки 1–7 як у SC-09, далі:
+8. Відповіді на `chargeOrder` немає 30 секунд: PaymentService виконує `checkTimeout()` і визначає, що час вийшов.
+9. PaymentService → DB: `savePayment(orderId, pending_verification, null, amount)`; DB ⇢ PaymentService: `paymentSaved`.
+10. PaymentService ⇢ OrderService: `PaymentResult(pending_verification)`. Статус лишається `new`.
+11. OrderService ⇢ UI/Controller ⇢ Buyer: `showVerificationNotice()`. Успіх не повідомляється.
