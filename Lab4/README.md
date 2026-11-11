@@ -4,29 +4,31 @@
 stateDiagram-v2
     direction LR
 
-    [*] --> New : Замовлення оформлено (UC-04)
-    New --> PendingPayment : Покупець натиснув «Оплатити»\n[CustomerOrder.status = new]
+    [*] --> New : Оформлення замовлення UC-04
+    New --> PendingPayment : Оплата, status = new SC-09
 
     state paymentResult <<choice>>
     PendingPayment --> paymentResult
+    paymentResult --> Paid : success, збережено Payment SC-10
+    paymentResult --> Declined : declined, статус new SC-11
+    paymentResult --> PendingVerification : timeout 30 с, статус new SC-12
 
-    paymentResult --> Paid : [success]\nЗберегти Payment;\nCustomerOrder.status = paid
-    paymentResult --> Declined : [declined]\nЗберегти Payment;\nCustomerOrder.status лишається new
-    paymentResult --> PendingVerification : [timeout 30 с від chargeOrder]\nЗберегти Payment;\nCustomerOrder.status лишається new
-
-    Declined --> [*]
-    PendingVerification --> [*]
+    Declined --> [*] : Кінцевий стан SC-11
+    PendingVerification --> [*] : Кінцевий стан SC-12
 
     state forkPoint <<fork>>
-    state joinPoint <<join>>
+    Paid --> forkPoint : Паралельні гілки SC-10, FR-08
 
-    Paid --> forkPoint
-    forkPoint --> joinPoint : Повідомити Покупця про успішну оплату
-    forkPoint --> deliveryResult : Передати замовлення службі доставки
+    forkPoint --> NotificationSent : Повідомити про успішну оплату SC-10
+    forkPoint --> deliveryResult : Передати замовлення на доставку SC-13, SC-14
 
     state deliveryResult <<choice>>
-    deliveryResult --> joinPoint : [доставку підтверджено]\nCustomerOrder.status = shipped
-    deliveryResult --> joinPoint : [служба доставки відмовила]\nCustomerOrder.status лишається paid;\nповідомити про помилку
+    deliveryResult --> DeliveryHandled : Підтверджено, status = shipped SC-13
+    deliveryResult --> DeliveryHandled : Відмова, status лишається paid SC-14
 
-    joinPoint --> [*]
+    state joinPoint <<join>>
+    NotificationSent --> joinPoint : Гілка A завершена FR-08
+    DeliveryHandled --> joinPoint : Гілка B завершена FR-08
+
+    joinPoint --> [*] : Обидві гілки завершені FR-08
 ```
