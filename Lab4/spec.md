@@ -44,7 +44,7 @@
 3. Результат шлюзу має взаємовиключні гілки, що покривають усі випадки: success / declined / timeout.
 4. Є щонайменше одне розгалуження і одна паралельна гілка з join.
 5. New і Paid відповідають CustomerOrder.status (new, paid) з ER (Завдання 1). Paid, Declined і PendingVerification відповідають статусам платежу (success, declined, pending_verification) зі Sequence (Завдання 3).
-6. Кожен перехід простежується до Sequence (SC-09–SC-12) або до Gherkin (SC-13, SC-14).
+6. Кожен перехід простежується до Sequence (SC-09–SC-12) або до Gherkin (SC-13, SC-14); у підписі кожного переходу діаграми вказано посилання на SC або UC.
 7. Join чекає обидві гілки (NotificationSent і DeliveryHandled); відмова служби доставки не блокує join і не змінює Payment.
 8. Кожна паралельна гілка входить у join одним потоком: взаємовиключні результати гілки зливаються в один стан до join.
 
