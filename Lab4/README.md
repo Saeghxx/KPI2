@@ -4,27 +4,28 @@
 stateDiagram-v2
     direction LR
 
-    [*] --> New : Оформлення замовлення UC-04
-    New --> PendingPayment : Оплата, status = new SC-09
+    [*] --> New : Замовлення оформлено UC-04
+    New --> PendingPayment : Натиснуто Оплатити, CustomerOrder.status = new SC-09
 
     state paymentResult <<choice>>
-    PendingPayment --> paymentResult
-    paymentResult --> Paid : success, збережено Payment SC-10
-    paymentResult --> Declined : declined, статус new SC-11
-    paymentResult --> PendingVerification : timeout 30 с, статус new SC-12
+    PendingPayment --> paymentResult : Результат шлюзу або таймаут SC-10, SC-11, SC-12
+
+    paymentResult --> Paid : success, Payment.status = success, CustomerOrder.status = paid SC-10
+    paymentResult --> Declined : declined, Payment.status = declined, CustomerOrder.status = new SC-11
+    paymentResult --> PendingVerification : timeout 30 с, Payment.status = pending_verification, CustomerOrder.status = new SC-12
 
     Declined --> [*] : Кінцевий стан SC-11
     PendingVerification --> [*] : Кінцевий стан SC-12
 
     state forkPoint <<fork>>
-    Paid --> forkPoint : Паралельні гілки SC-10, FR-08
+    Paid --> forkPoint : Запуск двох паралельних гілок SC-10, FR-08
 
     forkPoint --> NotificationSent : Повідомити про успішну оплату SC-10
-    forkPoint --> deliveryResult : Передати замовлення на доставку SC-13, SC-14
+    forkPoint --> deliveryResult : Передати замовлення службі доставки SC-13, SC-14
 
     state deliveryResult <<choice>>
-    deliveryResult --> DeliveryHandled : Підтверджено, status = shipped SC-13
-    deliveryResult --> DeliveryHandled : Відмова, status лишається paid SC-14
+    deliveryResult --> DeliveryHandled : Підтверджено, CustomerOrder.status = shipped SC-13
+    deliveryResult --> DeliveryHandled : Відмова, CustomerOrder.status = paid SC-14
 
     state joinPoint <<join>>
     NotificationSent --> joinPoint : Гілка A завершена FR-08
