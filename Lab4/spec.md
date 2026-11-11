@@ -14,6 +14,8 @@
 | Paid | Payment (`success`) і CustomerOrder (`status → paid`) | Шлюз підтвердив платіж |
 | Declined | Payment (`declined`); CustomerOrder лишається `new` | Шлюз відхилив платіж. Кінцевий стан |
 | PendingVerification | Payment (`pending_verification`, `transaction_id = NULL`); CustomerOrder лишається `new` | Відповіді немає за 30 с. Кінцевий стан |
+| NotificationSent | Етап процесу | Покупця повідомлено про успішну оплату (кінець гілки A) |
+| DeliveryHandled | Етап процесу (CustomerOrder: `shipped` або лишається `paid`) | Служба доставки відповіла: підтвердила або відмовила (кінець гілки B) |
 
 | Перехід | Умова / подія | Джерело |
 |---------|---------------|---------|
@@ -25,8 +27,9 @@
 | Declined → [*] | Кінцевий стан | SC-11 |
 | PendingVerification → [*] | Кінцевий стан | SC-12 |
 | Paid → fork | Дві паралельні гілки | SC-10, FR-08 |
-| Гілка A (fork → join) | Повідомити Покупця про успішну оплату | SC-10 |
-| Гілка B (fork → join) | Передати замовлення службі доставки. Підтверджено: `status → shipped`. Відмова: `status` лишається `paid`, повідомлення про помилку; гілка теж завершується | SC-13, SC-14 |
+| fork → NotificationSent | Повідомити Покупця про успішну оплату | SC-10 |
+| fork → DeliveryHandled | Передати замовлення службі доставки. Підтверджено: `status → shipped`; відмова: `status` лишається `paid`, повідомлення про помилку. Обидва результати ведуть в один стан DeliveryHandled | SC-13, SC-14 |
+| NotificationSent → join; DeliveryHandled → join | Join чекає обидва стани | FR-08 |
 | join → [*] | Обидві гілки завершені | FR-08 |
 
 Примітки:
@@ -42,7 +45,8 @@
 4. Є щонайменше одне розгалуження і одна паралельна гілка з join.
 5. New і Paid відповідають CustomerOrder.status (new, paid) з ER (Завдання 1). Paid, Declined і PendingVerification відповідають статусам платежу (success, declined, pending_verification) зі Sequence (Завдання 3).
 6. Кожен перехід простежується до Sequence (SC-09–SC-12) або до Gherkin (SC-13, SC-14).
-7. Join чекає обидві гілки; відмова служби доставки не блокує join і не змінює Payment.
+7. Join чекає обидві гілки (NotificationSent і DeliveryHandled); відмова служби доставки не блокує join і не змінює Payment.
+8. Кожна паралельна гілка входить у join одним потоком: взаємовиключні результати гілки зливаються в один стан до join.
 
 ## 4. Поза обсягом
 1. Повернення коштів і скасування замовлення (UC-10).
