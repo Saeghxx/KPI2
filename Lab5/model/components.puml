@@ -1,7 +1,7 @@
 @startuml components
 ' Lab5 — Component Diagram: online bookstore
-' Generated strictly from Lab5/spec.md. Interface names are shown on connectors;
-' operation lists are documented in notes. No implementation/deployment details added.
+' Source: Lab5/spec.md. Each interface is one declared node (lollipop = provided, socket = required).
+' Operation lists are in notes (spec criterion 10); IApi and ISql have no operations in spec section 5.
 
 top to bottom direction
 skinparam componentStyle uml2
@@ -34,7 +34,7 @@ package "Онлайн-книгарня — межа системи" as System {
   component "ShippingService\nFR-08; Shipment" as ShippingService
 
   ' Layer 4 — persistence abstraction
-  component "Data Access\nєдиний доступ до БД" as DataAccess
+  component "Data Access\nDB (Lab3)" as DataAccess
 
   ' Layer 5 — database
   database "БД\nER" as DB
@@ -90,11 +90,7 @@ package "Онлайн-книгарня — межа системи" as System {
   OrderService -[hidden]down- DataAccess
   DataAccess -[hidden]down- DB
 
-  ' Contract operation lists. Interface labels above contain names only.
-  note right of IApi
-    API ↔ Web UI
-    Операції окремо не деталізовані у spec
-  end note
+  ' Contract operation lists (spec section 5). No notes for IApi and ISql.
   note right of IAccounts
     register
     login
@@ -131,16 +127,11 @@ package "Онлайн-книгарня — межа системи" as System {
     readPublisher, savePublisher
     readReview, saveReview
     readShipment, saveShipment
-    readCustomerOrder, saveCustomerOrder
-    readOrderItem, saveOrderItem
-  end note
-  note right of ISql
-    Доступ до БД через Data Access;
-    окремі SQL-операції у spec не перелічені
+    saveCustomerOrder, saveOrderItem
   end note
 }
 
-' External providers are outside the system boundary and below their consumers.
+' External providers are outside the system boundary.
 component "Платіжний шлюз\n<<external>>" as Gateway
 component "Служба доставки\n<<external>>" as DeliveryService
 interface "IPaymentGateway" as IPaymentGateway
