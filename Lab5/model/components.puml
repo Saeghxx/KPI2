@@ -1,7 +1,7 @@
-@startuml components
+@startuml
 ' Lab5 — Component Diagram for the online bookstore
-' Architecture and responsibilities are taken from Lab5/spec.md.
-' Consumer-to-provider dependencies; services access the database only via Data Access.
+' Source: updated Lab5/spec.md; operations are documented in notes, not interface labels.
+' Dependencies are consumer -> required interface; each interface is declared once.
 
 top to bottom direction
 skinparam componentStyle uml2
@@ -21,76 +21,127 @@ skinparam interface {
 }
 
 package "Онлайн-книгарня — межа системи" as System {
+  ' Layer 1 — presentation
   component "Web UI\nUC-01–14" as WebUI
+
+  ' Layer 2 — API
   component "API\nUI/Controller (Lab3), FR-03" as API
 
-  component "AccountService\nFR-02, FR-12; Customer" as AccountService
-  component "CatalogService\nFR-01, FR-10, FR-11; Book, Author, Publisher, Review" as CatalogService
-  component "OrderService\nFR-04, FR-09; CustomerOrder, OrderItem" as OrderService
-  component "PaymentService\nFR-05–07; Payment" as PaymentService
-  component "ShippingService\nFR-08; Shipment" as ShippingService
+  ' Layer 3 — application services
+  together {
+    component "AccountService\nFR-02, FR-12; Customer" as AccountService
+    component "CatalogService\nFR-01, FR-10, FR-11; Book, Author, Publisher, Review" as CatalogService
+    component "OrderService\nFR-04, FR-09; CustomerOrder, OrderItem" as OrderService
+    component "PaymentService\nFR-05–07; Payment" as PaymentService
+    component "ShippingService\nFR-08; Shipment" as ShippingService
+  }
 
+  ' Layer 4 — persistence abstraction
   component "Data Access\nDB (Lab3)" as DataAccess
+
+  ' Layer 5 — database
   database "БД\nER" as DB
 
-  ' API provides IApi to Web UI.
-  API -() "IApi"
-  WebUI -l-( "IApi"
+  ' Every interface is one declared node. Operations are kept in notes.
+  interface "IApi" as IApi
+  interface "IAccounts" as IAccounts
+  interface "ICatalog" as ICatalog
+  interface "IOrders" as IOrders
+  interface "IPayments" as IPayments
+  interface "IShipping" as IShipping
+  interface "IRepository" as IRepository
+  interface "ISql" as ISql
 
-  ' Services provide their public interfaces to API.
-  AccountService -() "IAccounts\nregister, login, checkRole"
-  API -l-( "IAccounts"
-  CatalogService -() "ICatalog\nsearchBooks, saveBook, createReview"
-  API -l-( "ICatalog"
-  OrderService -() "IOrders\nplaceOrder, processOrderPayment, cancelOrder"
-  API -l-( "IOrders"
+  ' Provided / required interfaces
+  API - IApi
+  WebUI -l- IApi
 
-  ' OrderService consumes the payment and shipping capabilities.
-  PaymentService -() "IPayments\nprocessPayment(orderId, amount)"
-  OrderService -l-( "IPayments"
-  ShippingService -() "IShipping\nsubmitShipment(orderId)"
-  OrderService -l-( "IShipping"
+  AccountService - IAccounts
+  API -l- IAccounts
+  CatalogService - ICatalog
+  API -l- ICatalog
+  OrderService - IOrders
+  API -l- IOrders
 
-  ' Every service uses the single Data Access provider.
-  DataAccess -() "IRepository"
-  AccountService -l-( "IRepository"
-  CatalogService -l-( "IRepository"
-  OrderService -l-( "IRepository"
-  PaymentService -l-( "IRepository"
-  ShippingService -l-( "IRepository"
+  PaymentService - IPayments
+  OrderService -l- IPayments
+  ShippingService - IShipping
+  OrderService -l- IShipping
 
-  note right of DataAccess
-    IRepository operations:
-    readOrder, readOrderItems, savePayment, updateOrderStatus
+  DataAccess - IRepository
+  AccountService -l- IRepository
+  CatalogService -l- IRepository
+  OrderService -l- IRepository
+  PaymentService -l- IRepository
+  ShippingService -l- IRepository
+
+  DB - ISql
+  DataAccess -l- ISql
+
+  ' Operation lists are separate from interface node labels.
+  note right of IAccounts
+    register
+    login
+    checkRole
+  end note
+  note right of ICatalog
+    searchBooks
+    createBook
+    updateBook
+    createReview
+  end note
+  note right of IOrders
+    placeOrder
+    processOrderPayment
+    cancelOrder
+  end note
+  note right of IPayments
+    processPayment(orderId, amount)
+  end note
+  note right of IShipping
+    submitShipment(orderId)
+  end note
+  note right of IRepository
+    Sequence operations:
+    readOrder
+    readOrderItems
+    savePayment
+    updateOrderStatus
+
     Conditional ER operations:
-    readCustomer, saveCustomer, readBook, saveBook,
-    readAuthor, saveAuthor, readPublisher, savePublisher,
-    readReview, saveReview, readShipment, saveShipment
+    readCustomer, saveCustomer
+    readBook, saveBook
+    readAuthor, saveAuthor
+    readPublisher, savePublisher
+    readReview, saveReview
+    readShipment, saveShipment
+    readCustomerOrder, saveCustomerOrder
+    readOrderItem, saveOrderItem
   end note
 
-  ' Data Access is the only component that requires the database interface.
-  DB -() "ISql"
-  DataAccess -l-( "ISql"
-
-  ' Layer ordering hints; they do not add runtime dependencies.
+  ' Layer-order constraints (layout only; no runtime dependencies).
   WebUI -[hidden]down- API
   API -[hidden]down- AccountService
-  OrderService -[hidden]down- PaymentService
-  OrderService -[hidden]down- ShippingService
-  PaymentService -[hidden]down- DataAccess
+  AccountService -[hidden]right- CatalogService
+  CatalogService -[hidden]right- OrderService
+  OrderService -[hidden]right- PaymentService
+  PaymentService -[hidden]right- ShippingService
+  AccountService -[hidden]down- DataAccess
   DataAccess -[hidden]down- DB
 }
 
-' External systems remain outside the system boundary.
-component "Платіжний шлюз" as Gateway <<external>>
-component "Служба доставки" as DeliveryService <<external>>
-Gateway -() "IPaymentGateway\nchargeOrder(orderId, amount)"
-PaymentService -l-( "IPaymentGateway"
-DeliveryService -() "IDeliveryProvider\ncreateShipment(orderId)"
-ShippingService -l-( "IDeliveryProvider"
+' External systems are outside the system boundary and placed beside consumers.
+component "Платіжний шлюз\n<<external>>" as Gateway
+component "Служба доставки\n<<external>>" as DeliveryService
+interface "IPaymentGateway" as IPaymentGateway
+interface "IDeliveryProvider" as IDeliveryProvider
 
-' External integrations are visually aligned with their consuming services.
+Gateway - IPaymentGateway
+PaymentService -l- IPaymentGateway
+DeliveryService - IDeliveryProvider
+ShippingService -l- IDeliveryProvider
+
+' Keep external providers near the services that consume their interfaces.
 Gateway -[hidden]down- PaymentService
 DeliveryService -[hidden]down- ShippingService
-
 @enduml
