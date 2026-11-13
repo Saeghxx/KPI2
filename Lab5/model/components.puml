@@ -1,0 +1,96 @@
+@startuml components
+' Lab5 — Component Diagram for the online bookstore
+' Architecture and responsibilities are taken from Lab5/spec.md.
+' Consumer-to-provider dependencies; services access the database only via Data Access.
+
+top to bottom direction
+skinparam componentStyle uml2
+skinparam shadowing false
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam component {
+  BackgroundColor #F7FAFC
+  BorderColor #35516B
+  FontColor #172B3A
+}
+skinparam interface {
+  BackgroundColor #FFFFFF
+  BorderColor #35516B
+  FontColor #172B3A
+}
+
+package "Онлайн-книгарня — межа системи" as System {
+  component "Web UI\nUC-01–14" as WebUI
+  component "API\nUI/Controller (Lab3), FR-03" as API
+
+  component "AccountService\nFR-02, FR-12; Customer" as AccountService
+  component "CatalogService\nFR-01, FR-10, FR-11; Book, Author, Publisher, Review" as CatalogService
+  component "OrderService\nFR-04, FR-09; CustomerOrder, OrderItem" as OrderService
+  component "PaymentService\nFR-05–07; Payment" as PaymentService
+  component "ShippingService\nFR-08; Shipment" as ShippingService
+
+  component "Data Access\nDB (Lab3)" as DataAccess
+  database "БД\nER" as DB
+
+  ' API provides IApi to Web UI.
+  API -() "IApi"
+  WebUI -l-( "IApi"
+
+  ' Services provide their public interfaces to API.
+  AccountService -() "IAccounts\nregister, login, checkRole"
+  API -l-( "IAccounts"
+  CatalogService -() "ICatalog\nsearchBooks, saveBook, createReview"
+  API -l-( "ICatalog"
+  OrderService -() "IOrders\nplaceOrder, processOrderPayment, cancelOrder"
+  API -l-( "IOrders"
+
+  ' OrderService consumes the payment and shipping capabilities.
+  PaymentService -() "IPayments\nprocessPayment(orderId, amount)"
+  OrderService -l-( "IPayments"
+  ShippingService -() "IShipping\nsubmitShipment(orderId)"
+  OrderService -l-( "IShipping"
+
+  ' Every service uses the single Data Access provider.
+  DataAccess -() "IRepository"
+  AccountService -l-( "IRepository"
+  CatalogService -l-( "IRepository"
+  OrderService -l-( "IRepository"
+  PaymentService -l-( "IRepository"
+  ShippingService -l-( "IRepository"
+
+  note right of DataAccess
+    IRepository operations:
+    readOrder, readOrderItems, savePayment, updateOrderStatus
+    Conditional ER operations:
+    readCustomer, saveCustomer, readBook, saveBook,
+    readAuthor, saveAuthor, readPublisher, savePublisher,
+    readReview, saveReview, readShipment, saveShipment
+  end note
+
+  ' Data Access is the only component that requires the database interface.
+  DB -() "ISql"
+  DataAccess -l-( "ISql"
+
+  ' Layer ordering hints; they do not add runtime dependencies.
+  WebUI -[hidden]down- API
+  API -[hidden]down- AccountService
+  OrderService -[hidden]down- PaymentService
+  OrderService -[hidden]down- ShippingService
+  PaymentService -[hidden]down- DataAccess
+  DataAccess -[hidden]down- DB
+}
+
+' External systems remain outside the system boundary.
+component "Платіжний шлюз" as Gateway <<external>>
+component "Служба доставки" as DeliveryService <<external>>
+Gateway -() "IPaymentGateway\nchargeOrder(orderId, amount)"
+PaymentService -l-( "IPaymentGateway"
+DeliveryService -() "IDeliveryProvider\ncreateShipment(orderId)"
+ShippingService -l-( "IDeliveryProvider"
+
+' External integrations are visually aligned with their consuming services.
+Gateway -[hidden]down- PaymentService
+DeliveryService -[hidden]down- ShippingService
+
+@enduml
