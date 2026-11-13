@@ -45,6 +45,7 @@
 6. Назви `submitShipment` і `createShipment` умовні: у Lab3 доставки немає.
 7. Payment, Shipment, `Customer.role` і `password_hash` є в ER (`Lab2/model/er.md`, оновлено в Завданні 2); у ER Завдання 1 їх не було.
 8. Операції IRepository для Customer, Book, Author, Publisher, Review і Shipment у Sequence відсутні; їхні назви визначаються під час генерації діаграми.
+9. `DB` у Sequence (Lab3) відповідає Data Access + БД; назви операцій readOrder, readOrderItems, savePayment, updateOrderStatus лишаються на IRepository.
 
 ## 7. Поза обсягом
 SMS/Email, OAuth, повернення коштів, деплоймент (немає FR, що їх вимагає).
