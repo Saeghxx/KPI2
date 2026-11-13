@@ -48,7 +48,7 @@
 9. `DB` у Sequence (Lab3) відповідає Data Access + БД; назви операцій readOrder, readOrderItems, savePayment, updateOrderStatus лишаються на IRepository.
 10. Після `paid` OrderService координує обидві гілки Завдання 4 (повідомлення через API, передача в ShippingService) і сам змінює `CustomerOrder.status` (`paid`, `shipped`); ShippingService лише повертає результат доставки. Помилку доставки (SC-14) OrderService повертає у відповіді на виклик IOrders, без зворотної залежності.
 11. API перевіряє сесію й роль через IAccounts; облікові дані, пароль і роль зберігає лише AccountService.
-12. Назви операцій не повторюються на різних інтерфейсах: IRepository використовує префікси `read` і `save`, інтерфейси сервісів використовують інші дієслова.
+12. Назви операцій не повторюються на різних інтерфейсах. Операції IRepository зі Sequence лишаються як є; нові операції IRepository мають префікси `read` і `save`, а інтерфейси сервісів використовують інші дієслова.
 
 ## 7. Поза обсягом
 SMS/Email, OAuth, повернення коштів, деплоймент (немає FR, що їх вимагає).
