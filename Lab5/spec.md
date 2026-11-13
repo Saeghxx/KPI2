@@ -41,12 +41,12 @@
 2. Вхід належить AccountService; UC входу в Завданні 2 немає, це відома прогалина.
 3. Після `paid` дії координує OrderService (див. п. 10).
 4. Залежності односпрямовані, циклів немає.
-5. Повідомлення Покупцю (FR-07, стан NotificationSent у Завданні 4) повертає OrderService через API в UI; окремого компонента немає.
+5. Повідомлення Покупцю (FR-07, стан NotificationSent у Завданні 4) є частиною відповіді OrderService на виклик IOrders; API передає її в UI. Зворотного required-інтерфейсу від OrderService до API немає; окремого компонента немає.
 6. Назви `submitShipment` і `createShipment` умовні: у Lab3 доставки немає. Так само умовні операції IAccounts, ICatalog і IOrders, крім `processOrderPayment`.
 7. Payment, Shipment, `Customer.role` і `password_hash` є в ER (`Lab2/model/er.md`, оновлено в Завданні 2); у ER Завдання 1 їх не було.
 8. У Sequence (Lab3) є лише `readOrder`, `readOrderItems`, `savePayment`, `updateOrderStatus`. Для решти ER-сутностей (Customer, Book, Author, Publisher, Review, Shipment) і для збереження CustomerOrder та OrderItem операцій у Sequence немає: вони матимуть префікси `read` і `save`, а точні назви визначаються під час генерації діаграми.
 9. `DB` у Sequence (Lab3) відповідає Data Access + БД; назви операцій readOrder, readOrderItems, savePayment, updateOrderStatus лишаються на IRepository.
-10. Після `paid` OrderService координує обидві гілки Завдання 4 (повідомлення через API, передача в ShippingService) і сам змінює `CustomerOrder.status` (`paid`, `shipped`); ShippingService лише повертає результат доставки. Помилку доставки (SC-14) повертає OrderService через API в UI.
+10. Після `paid` OrderService координує обидві гілки Завдання 4 (повідомлення через API, передача в ShippingService) і сам змінює `CustomerOrder.status` (`paid`, `shipped`); ShippingService лише повертає результат доставки. Помилку доставки (SC-14) OrderService повертає у відповіді на виклик IOrders, без зворотної залежності.
 11. API перевіряє сесію й роль через IAccounts; облікові дані, пароль і роль зберігає лише AccountService.
 12. Назви операцій не повторюються на різних інтерфейсах: IRepository використовує префікси `read` і `save`, інтерфейси сервісів використовують інші дієслова.
 
