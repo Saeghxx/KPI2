@@ -27,26 +27,33 @@
 Платіжний шлюз і Служба доставки (Lab2, Lab3).
 
 ## 5. Інтерфейси (provided → хто потребує)
+- IApi: API → Web UI.
 - IAccounts, ICatalog, IOrders: сервіс → API.
 - IPayments (`processPayment(orderId, amount)`): PaymentService → OrderService.
 - IShipping (`submitShipment(orderId)`): ShippingService → OrderService.
 - IPaymentGateway (`chargeOrder(orderId, amount)`): Платіжний шлюз → PaymentService.
 - IDeliveryProvider (`createShipment(orderId)`): Служба доставки → ShippingService.
-- IRepository (`readOrder`, `readOrderItems`, `savePayment`, `updateOrderStatus`): Data Access → усі сервіси.
+- IRepository (`readOrder`, `readOrderItems`, `savePayment`, `updateOrderStatus` — операції зі Sequence Lab3; плюс збереження й читання сутностей ER, які обслуговує кожен сервіс): Data Access → усі сервіси.
+- ISql: БД → Data Access.
 
 ## 6. Рішення
 1. Кошик живе в сесії API, у БД його немає (рішення Lab2).
 2. Вхід належить AccountService; UC входу в Завданні 2 немає, це відома прогалина.
 3. Після `paid` доставку запускає OrderService через ShippingService.
 4. Залежності односпрямовані, циклів немає.
+5. Повідомлення Покупцю (FR-07, стан NotificationSent у Завданні 4) повертає OrderService через API в UI; окремого компонента немає.
+6. Назви `submitShipment` і `createShipment` умовні: у Lab3 доставки немає.
+7. Payment, Shipment, `Customer.role` і `password_hash` є в ER (`Lab2/model/er.md`, оновлено в Завданні 2); у ER Завдання 1 їх не було.
+8. Операції IRepository для Customer, Book, Author, Publisher, Review і Shipment у Sequence відсутні; їхні назви визначаються під час генерації діаграми.
 
 ## 7. Поза обсягом
-SMS/Email, OAuth, Category, wishlist, повернення коштів, деплоймент.
+SMS/Email, OAuth, повернення коштів, деплоймент (немає FR, що їх вимагає).
+Category і wishlist: немає FR/UC, тому компонента-власника не мають.
 
 ## 8. Критерії прийняття
-1. Кожен компонент має посилання на FR/UC і сутність ER.
+1. Кожен компонент має посилання на FR/UC, Sequence або сутність ER.
 2. Кожен required-інтерфейс має рівно одного provider.
-3. Назви операцій збігаються з повідомленнями Lab3.
+3. Назви операцій збігаються з повідомленнями Lab3 (крім умовних, пп. 6.6 і 6.8).
 4. Межа системи намальована, зовнішні системи поза нею.
 5. Немає циклічних залежностей.
 6. Сервіси звертаються до БД лише через Data Access.
