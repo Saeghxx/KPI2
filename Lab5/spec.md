@@ -47,6 +47,7 @@
 8. Операції IRepository для Customer, Book, Author, Publisher, Review і Shipment у Sequence відсутні; їхні назви визначаються під час генерації діаграми.
 9. `DB` у Sequence (Lab3) відповідає Data Access + БД; назви операцій readOrder, readOrderItems, savePayment, updateOrderStatus лишаються на IRepository.
 10. Після `paid` OrderService координує обидві гілки Завдання 4 (повідомлення через API, передача в ShippingService) і сам змінює `CustomerOrder.status` (`paid`, `shipped`); ShippingService лише повертає результат доставки. Помилку доставки (SC-14) повертає OrderService через API в UI.
+11. API перевіряє сесію й роль через IAccounts; облікові дані, пароль і роль зберігає лише AccountService. оце дописати?
 
 ## 7. Поза обсягом
 SMS/Email, OAuth, повернення коштів, деплоймент (немає FR, що їх вимагає).
