@@ -1,0 +1,156 @@
+@startuml components
+' Lab5 — Component Diagram: online bookstore
+' Source: Lab5/spec.md. Each interface is one declared node (lollipop = provided, socket = required).
+' Operation lists are in notes (spec criterion 10); IApi and ISql have no operations in spec section 5.
+
+top to bottom direction
+skinparam componentStyle uml2
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam component {
+  BackgroundColor #F7FAFC
+  BorderColor #35516B
+  FontColor #172B3A
+}
+skinparam interface {
+  BackgroundColor #FFFFFF
+  BorderColor #35516B
+  FontColor #172B3A
+}
+
+package "Онлайн-книгарня — межа системи" as System {
+  ' Layer 1 — Web UI
+  component "Web UI\nUC-01–14" as WebUI
+
+  ' Layer 2 — API
+  component "API\nUI/Controller (Lab3), FR-03" as API
+
+  ' Layer 3 — application services
+  component "AccountService\nFR-02, FR-12; Customer" as AccountService
+  component "CatalogService\nFR-01, FR-10, FR-11; Book, Author, Publisher, Review" as CatalogService
+  component "OrderService\nFR-04, FR-09; CustomerOrder, OrderItem" as OrderService
+  component "PaymentService\nFR-05–07; Payment" as PaymentService
+  component "ShippingService\nFR-08; Shipment" as ShippingService
+
+  ' Layer 4 — persistence abstraction
+  component "Data Access\nDB (Lab3)" as DataAccess
+
+  ' Layer 5 — database
+  database "БД\nER" as DB
+
+  ' One interface node per contract. Provider is below its consumer:
+  ' consumer uses required socket (-d-(), provider exposes provided lollipop (-u-).
+  interface "IApi" as IApi
+  interface "IAccounts" as IAccounts
+  interface "ICatalog" as ICatalog
+  interface "IOrders" as IOrders
+  interface "IPayments" as IPayments
+  interface "IShipping" as IShipping
+  interface "IRepository" as IRepository
+  interface "ISql" as ISql
+
+  ' IApi: API provides; Web UI requires.
+  API -u- IApi
+  WebUI -d-( IApi
+
+  ' Service contracts: service provides; API requires.
+  AccountService -u- IAccounts
+  API -d-( IAccounts
+  CatalogService -u- ICatalog
+  API -d-( ICatalog
+  OrderService -u- IOrders
+  API -d-( IOrders
+
+  ' OrderService requires these; the corresponding service provides them.
+  PaymentService -u- IPayments
+  OrderService -d-( IPayments
+  ShippingService -u- IShipping
+  OrderService -d-( IShipping
+
+  ' Data Access provides IRepository to each service.
+  DataAccess -u- IRepository
+  AccountService -d-( IRepository
+  CatalogService -d-( IRepository
+  OrderService -d-( IRepository
+  PaymentService -d-( IRepository
+  ShippingService -d-( IRepository
+
+  ' DB provides ISql; Data Access requires it.
+  DB -u- ISql
+  DataAccess -d-( ISql
+
+  ' Layer placement constraints only; these are not dependencies.
+  WebUI -[hidden]down- API
+  API -[hidden]down- AccountService
+  AccountService -[hidden]right- CatalogService
+  CatalogService -[hidden]right- OrderService
+  OrderService -[hidden]right- PaymentService
+  PaymentService -[hidden]right- ShippingService
+  OrderService -[hidden]down- DataAccess
+  DataAccess -[hidden]down- DB
+
+  ' Contract operation lists (spec section 5). No notes for IApi and ISql.
+  note right of IAccounts
+    register
+    login
+    checkRole
+  end note
+  note right of ICatalog
+    searchBooks
+    createBook
+    updateBook
+    createReview
+  end note
+  note right of IOrders
+    placeOrder
+    processOrderPayment
+    cancelOrder
+  end note
+  note right of IPayments
+    processPayment(orderId, amount)
+  end note
+  note right of IShipping
+    submitShipment(orderId)
+  end note
+  note right of IRepository
+    Sequence (Lab3):
+    readOrder
+    readOrderItems
+    savePayment
+    updateOrderStatus
+
+    Conditional ER operations:
+    readCustomer, saveCustomer
+    readBook, saveBook
+    readAuthor, saveAuthor
+    readPublisher, savePublisher
+    readReview, saveReview
+    readShipment, saveShipment
+    saveCustomerOrder, saveOrderItem
+  end note
+}
+
+' External providers are outside the system boundary.
+component "Платіжний шлюз\n<<external>>" as Gateway
+component "Служба доставки\n<<external>>" as DeliveryService
+interface "IPaymentGateway" as IPaymentGateway
+interface "IDeliveryProvider" as IDeliveryProvider
+
+Gateway -u- IPaymentGateway
+PaymentService -d-( IPaymentGateway
+DeliveryService -u- IDeliveryProvider
+ShippingService -d-( IDeliveryProvider
+
+note right of IPaymentGateway
+  chargeOrder(orderId, amount)
+end note
+note right of IDeliveryProvider
+  createShipment(orderId)
+end note
+
+' Keep each external provider near its consuming service.
+PaymentService -[hidden]down- Gateway
+ShippingService -[hidden]down- DeliveryService
+
+@enduml
